@@ -93,6 +93,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
+      console.log("VaaniAI: Speech Recognition Initialized (v0.0.1)");
 
       const langMap: Record<string, string> = {
         'en': 'en-US',
