@@ -1,0 +1,7 @@
+{
+  "name": "VaaniAI",
+  "description": "A human-centric AI language tutor that helps users learn through calm, supportive conversation and interactive practice.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
