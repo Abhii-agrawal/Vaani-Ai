@@ -89,12 +89,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
     }
   };
 
-  const simulateVoiceInput = () => {
-    setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      handleSend("Hi professor, can we practice some phrases for ordering food?");
-    }, 2500);
+  const startListening = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+
+      const langMap: Record<string, string> = {
+        'en': 'en-US',
+        'hi': 'hi-IN',
+        'es': 'es-ES',
+        'fr': 'fr-FR',
+        'de': 'de-DE'
+      };
+      recognition.lang = langMap[language.code] || 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        // Optional: Auto-send if desired, but user might want to edit
+        // handleSend(transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsRecording(false);
+        alert("Microphone error: " + event.error);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognition.start();
+    } else {
+      alert("Your browser does not support speech recognition. Please use Chrome or Edge.");
+    }
   };
 
   return (
@@ -111,8 +146,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
           </div>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={handleEndConversation} 
+          <button
+            onClick={handleEndConversation}
             className="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider rounded-xl duo-button border-rose-200 dark:border-rose-900 hover:bg-rose-100 transition-all"
           >
             End & Review
@@ -127,11 +162,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-transparent">
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
-            <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm text-sm font-bold leading-relaxed ${
-              m.role === 'user' 
-                ? 'bg-white dark:bg-slate-800 text-duoText dark:text-white border-2 border-duoLightGray dark:border-slate-700' 
-                : 'bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 text-duoText dark:text-white'
-            }`}>
+            <div className={`max-w-[80%] p-4 rounded-2xl shadow-sm text-sm font-bold leading-relaxed ${m.role === 'user'
+              ? 'bg-white dark:bg-slate-800 text-duoText dark:text-white border-2 border-duoLightGray dark:border-slate-700'
+              : 'bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 text-duoText dark:text-white'
+              }`}>
               {m.content}
               <div className="text-[9px] mt-2 opacity-30 font-bold uppercase tracking-widest">
                 {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -145,23 +179,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
             Vaani is typing...
           </div>
         )}
-        
+
         {review && (
           <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border-4 border-duoLightGray dark:border-slate-800 shadow-2xl animate-in zoom-in-95 max-w-xl mx-auto">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-xl flex items-center justify-center text-2xl">✨</div>
               <h4 className="text-xl font-black text-duoText dark:text-white">Session Review</h4>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-8">
-               <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border-2 border-duoLightGray dark:border-slate-700 text-center">
-                 <div className="text-[9px] text-duoGray uppercase font-black tracking-widest mb-1">New Proficiency</div>
-                 <div className="text-3xl font-black text-primary">+{Math.round(Math.random() * 5 + 2)}%</div>
-               </div>
-               <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border-2 border-duoLightGray dark:border-slate-700 text-center">
-                 <div className="text-[9px] text-duoGray uppercase font-black tracking-widest mb-1">Coach Score</div>
-                 <div className="text-3xl font-black text-secondary">{review.confidenceScore}%</div>
-               </div>
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border-2 border-duoLightGray dark:border-slate-700 text-center">
+                <div className="text-[9px] text-duoGray uppercase font-black tracking-widest mb-1">New Proficiency</div>
+                <div className="text-3xl font-black text-primary">+{Math.round(Math.random() * 5 + 2)}%</div>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border-2 border-duoLightGray dark:border-slate-700 text-center">
+                <div className="text-[9px] text-duoGray uppercase font-black tracking-widest mb-1">Coach Score</div>
+                <div className="text-3xl font-black text-secondary">{review.confidenceScore}%</div>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -174,14 +208,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
                 </div>
               ))}
             </div>
-            <button 
+            <button
               onClick={() => {
                 setReview(null);
                 setMessages([
                   ...messages,
                   { id: Date.now().toString(), role: 'model', content: "That review looked great! Ready to keep practicing?", timestamp: new Date() }
                 ]);
-              }} 
+              }}
               className="mt-8 w-full py-4 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-wider duo-button border-primaryDark"
             >
               Continue Practice
@@ -193,29 +227,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ language, mode, persona, 
       {/* Input Area */}
       <div className="p-4 bg-white dark:bg-[#042f2e] border-t border-duoLightGray dark:border-slate-800">
         <div className="max-w-4xl mx-auto flex gap-3 items-center">
-          <button 
-            onClick={simulateVoiceInput}
-            className={`p-4 rounded-xl transition-all duo-button border-2 ${
-              isRecording 
-                ? 'bg-rose-500 text-white border-rose-700 animate-pulse' 
-                : 'bg-white dark:bg-slate-800 text-primary border-duoLightGray dark:border-slate-700 hover:bg-slate-50'
-            }`}
+          <button
+            onClick={startListening}
+            className={`p-4 rounded-xl transition-all duo-button border-2 ${isRecording
+              ? 'bg-rose-500 text-white border-rose-700 animate-pulse'
+              : 'bg-white dark:bg-slate-800 text-primary border-duoLightGray dark:border-slate-700 hover:bg-slate-50'
+              }`}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-20a3 3 0 00-3 3v8a3 3 0 006 0V5a3 3 0 00-3-3z"></path></svg>
           </button>
           <div className="flex-1 relative">
-            <input 
-              type="text" 
-              value={inputValue} 
+            <input
+              type="text"
+              value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               placeholder="Type your response..."
               className="w-full bg-slate-50 dark:bg-slate-900 px-6 py-4 rounded-xl focus:outline-none border-2 border-duoLightGray dark:border-slate-700 text-sm font-bold placeholder:text-duoGray dark:text-white"
             />
           </div>
-          <button 
-            onClick={() => handleSend()} 
-            disabled={!inputValue.trim() || isLoading} 
+          <button
+            onClick={() => handleSend()}
+            disabled={!inputValue.trim() || isLoading}
             className="p-4 bg-secondary disabled:bg-duoGray text-white rounded-xl duo-button border-secondaryDark disabled:border-duoGray transition-all active:scale-95"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
